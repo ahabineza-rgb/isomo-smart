@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="rw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#14532d">
+<title>ISOMO SMART — S6 Practice</title>
+<style>
+:root{--green:#166534;--green2:#15803d;--bg:#f4f7f4;--card:#fff;--ink:#17211b;--muted:#607066;--line:#dce6de;--blue:#eaf3ff;--red:#fff0ef;--gold:#fff7dd}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5}
+header{background:linear-gradient(135deg,#14532d,#15803d);color:#fff;padding:22px 16px}
+.wrap{max-width:900px;margin:auto}header h1{margin:0;font-size:clamp(1.7rem,4vw,2.4rem);letter-spacing:.03em}header p{margin:5px 0 0;opacity:.92}
+main{padding:18px 14px 40px}.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+select,button{font:inherit;border-radius:10px;border:1px solid var(--line);padding:10px 12px;background:#fff;color:var(--ink)}
+button{cursor:pointer;font-weight:650}button.primary{background:var(--green);border-color:var(--green);color:white}button:disabled{opacity:.45;cursor:not-allowed}
+.status{margin-left:auto;font-size:.9rem;color:var(--muted)}.panel,.question,.result{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:12px 0;box-shadow:0 3px 12px #193b1b0a}
+.panel h2{margin:0 0 6px}.small{font-size:.92rem;color:var(--muted)}.progress{height:8px;background:#e4ece5;border-radius:10px;overflow:hidden;margin:10px 0 16px}.bar{height:100%;background:var(--green2);width:0;transition:width .2s}
+.qhead{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:.88rem}.question h3{margin:10px 0 14px;font-size:1.13rem}
+.options{display:grid;gap:9px}.option{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);padding:11px;border-radius:11px;cursor:pointer;background:#fff}.option:has(input:checked){border-color:var(--green2);background:#f0faf1}.option input{margin-top:5px;accent-color:var(--green)}
+.feedback{margin-top:13px;padding:12px;border-radius:10px}.correct{background:#e9f8ed;border:1px solid #b8e4c4}.wrong{background:var(--red);border:1px solid #f1c5c1}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.hidden{display:none!important}.result{text-align:center;padding:25px}.score{font-size:2.5rem;font-weight:800;color:var(--green);margin:6px}
+.topic-tag{display:inline-block;background:#edf7ee;color:#205b2e;border-radius:30px;padding:3px 9px;font-size:.8rem;font-weight:700}
+footer{text-align:center;color:var(--muted);font-size:.85rem;padding:8px 18px 25px}
+@media(min-width:700px){main{padding-top:24px}.options{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>📘 ISOMO SMART</h1>
+  <p id="tagline">Wige. Itoze. Reba amanota yawe. / Learn. Practise. See your score.</p>
+</div></header>
+<main class="wrap">
+  <section class="panel">
+    <div class="toolbar">
+      <label for="lang"><strong id="langLabel">Ururimi / Language</strong></label>
+      <select id="lang"><option value="rw">Ikinyarwanda</option><option value="en">English</option></select>
+      <label for="subject"><strong id="subjectLabel">Isomo / Subject</strong></label>
+      <select id="subject"><option value="all">Amasomo yose / All subjects</option><option value="math">Mathematics</option><option value="biology">Biology</option><option value="chemistry">Chemistry</option></select>
+      <span class="status" id="offlineStatus">● Ikora offline / Works offline</span>
+    </div>
+    <h2 id="welcome">Murakaza neza kuri ISOMO SMART!</h2>
+    <p class="small" id="intro">Hitamo isomo, usubize ibibazo, hanyuma urebe amanota n'ibisobanuro. Ibibazo biri muri iyi prototype ni iby'icyitegererezo.</p>
+    <div class="small" id="savedInfo">Amanota ya nyuma abikwa kuri iki gikoresho gusa.</div>
+  </section>
+
+  <section id="quizArea">
+    <div class="progress"><div class="bar" id="progressBar"></div></div>
+    <div class="question" id="questionCard">
+      <div class="qhead"><span id="qNumber">Ikibazo 1</span><span class="topic-tag" id="topicTag">Mathematics</span></div>
+      <h3 id="questionText"></h3>
+      <div class="options" id="options"></div>
+      <div id="feedback" class="feedback hidden" aria-live="polite"></div>
+      <div class="actions">
+        <button class="primary" id="checkBtn">Reba igisubizo / Check answer</button>
+        <button id="nextBtn" class="hidden">Ikibazo gikurikira / Next</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="resultArea" class="result hidden" aria-live="polite">
+    <h2 id="resultTitle">Ikizamini kirarangiye!</h2>
+    <div class="score" id="scoreText">0%</div>
+    <p id="scoreDetail"></p>
+    <p id="resultMessage"></p>
+    <div class="actions" style="justify-content:center">
+      <button class="primary" id="retryBtn">Ongera ukore / Try again</button>
+      <button id="changeBtn">Hindura isomo / Change subject</button>
+    </div>
+  </section>
+</main>
+<footer>ISOMO SMART • Prototype y'umunyeshuri • Ibibazo ni iby'icyitegererezo, si ikizamini cyemewe cya REB.</footer>
+<script>
+const bank = [
+ {id:1,subject:"math",topic:"Algebra",q:{rw:"Niba 2x + 4 = 12, x ingana iki?",en:"If 2x + 4 = 12, what is x?"},opts:{rw:["2","4","6","8"],en:["2","4","6","8"]},a:1,exp:{rw:"Kuramo 4 ku mpande zombi: 2x = 8. Gabanya na 2, ubone x = 4.",en:"Subtract 4 from both sides: 2x = 8. Divide by 2, so x = 4."}},
+ {id:2,subject:"biology",topic:"Photosynthesis",q:{rw:"Ni iyihe gaze ibimera bifata mu gihe cya photosynthesis?",en:"Which gas do plants take in during photosynthesis?"},opts:{rw:["Oxygen","Nitrogen","Carbon dioxide","Hydrogen"],en:["Oxygen","Nitrogen","Carbon dioxide","Hydrogen"]},a:2,exp:{rw:"Ibimera bifata carbon dioxide mu gukora ibiryo byabyo bifashishije urumuri.",en:"Plants take in carbon dioxide to make food using light energy."}},
+ {id:3,subject:"math",topic:"Percentages",q:{rw:"Ni iyihe mibare ingana na 3/4 mu ijanisha?",en:"What percentage is equivalent to 3/4?"},opts:{rw:["25%","50%","75%","80%"],en:["25%","50%","75%","80%"]},a:2,exp:{rw:"3 ÷ 4 × 100 = 75%.",en:"3 divided by 4, multiplied by 100, equals 75%."}},
+ {id:4,subject:"chemistry",topic:"Acids and bases",q:{rw:"Agaciro ka pH kari munsi ya 7 kagaragaza iki ku gisubizo?",en:"A pH value below 7 indicates that a solution is…"},opts:{rw:["Alkaline / alkaline","Acidic / aside","Neutral / kidafite uruhande","Metallic / icyuma"],en:["Alkaline","Acidic","Neutral","Metallic"]},a:1,exp:{rw:"Igisubizo gifite pH iri munsi ya 7 kiba aside; pH 7 iba neutral ku gipimo gisanzwe.",en:"A solution with pH below 7 is acidic; pH 7 is neutral on the usual scale."}},
+ {id:5,subject:"biology",topic:"Cells",q:{rw:"Ni ikihe gice cy'akaremangingo kibamo ibikoresho by'uturemangingo kandi kigafasha kugenzura imikorere yako?",en:"Which cell structure contains genetic material and helps control cell activities?"},opts:{rw:["Nucleus / Nucleus","Cell wall / Urukuta","Vacuole / Vacuole","Cytoplasm / Cytoplasm"],en:["Nucleus","Cell wall","Vacuole","Cytoplasm"]},a:0,exp:{rw:"Nucleus irimo DNA kandi igira uruhare mu kugenzura ibikorwa by'akaremangingo.",en:"The nucleus contains DNA and helps regulate cell activities."}},
+ {id:6,subject:"math",topic:"Functions",q:{rw:"Niba f(x) = 3x − 2, f(4) ingana iki?",en:"If f(x) = 3x − 2, what is f(4)?"},opts:{rw:["8","10","12","14"],en:["8","10","12","14"]},a:1,exp:{rw:"Shyiramo x = 4: f(4) = 3(4) − 2 = 12 − 2 = 10.",en:"Substitute x = 4: f(4) = 3(4) − 2 = 12 − 2 = 10."}}
+];
+const copy={
+ rw:{all:"Amasomo yose / All subjects",math:"Mathematics",biology:"Biology",chemistry:"Chemistry",welcome:"Murakaza neza kuri ISOMO SMART!",intro:"Hitamo isomo, usubize ibibazo, hanyuma urebe amanota n'ibisobanuro. Ibibazo biri muri iyi prototype ni iby'icyitegererezo.",saved:"Amanota ya nyuma abikwa kuri iki gikoresho gusa.",question:"Ikibazo",check:"Reba igisubizo",next:"Ikibazo gikurikira",result:"Ikizamini kirarangiye!",detail:"Wabonye {n} kuri {total}.",good:"Byiza! Komeza witoze.",try:"Komeza wige, usubire ku bisobanuro by'ibibazo wibeshyeho.",choose:"Banza uhitemo igisubizo.",right:"Ni byo!",wrong:"Si byo.",correct:"Igisubizo nyacyo",retry:"Ongera ukore",change:"Hindura isomo",last:"Amanota ya nyuma",offline:"● Ikora offline"},
+ en:{all:"All subjects / Amasomo yose",math:"Mathematics",biology:"Biology",chemistry:"Chemistry",welcome:"Welcome to ISOMO SMART!",intro:"Choose a subject, answer the questions, then review your score and explanations. The questions in this prototype are examples.",saved:"Your latest score is saved only on this device.",question:"Question",check:"Check answer",next:"Next question",result:"Quiz complete!",detail:"You got {n} out of {total}.",good:"Great work! Keep practising.",try:"Keep learning and review the explanations for questions you missed.",choose:"Please choose an answer first.",right:"Correct!",wrong:"Not quite.",correct:"Correct answer",retry:"Try again",change:"Change subject",last:"Latest score",offline:"● Works offline"}
+};
+let lang="rw", questions=[], index=0, answers={}, checked={}, score=0;
+const $=id=>document.getElementById(id);
+function t(key){return copy[lang][key]||key}
+function setStatic(){
+ $("welcome").textContent=t("welcome");$("intro").textContent=t("intro");$("savedInfo").textContent=t("saved");$("offlineStatus").textContent=t("offline");
+ $("langLabel").textContent=lang==="rw"?"Ururimi / Language":"Language / Ururimi";
+ $("subjectLabel").textContent=lang==="rw"?"Isomo / Subject":"Subject / Isomo";
+ const sel=$("subject"), val=sel.value; [...sel.options].forEach(o=>{o.textContent=t(o.value)});sel.value=val;
+ $("checkBtn").textContent=t("check");$("nextBtn").textContent=t("next");$("retryBtn").textContent=t("retry");$("changeBtn").textContent=t("change");
+}
+function start(){
+ const subj=$("subject").value;
+ questions=bank.filter(q=>subj==="all"||q.subject===subj);
+ index=0;answers={};checked={};score=0;
+ $("resultArea").classList.add("hidden");$("quizArea").classList.remove("hidden");
+ render();setStatic();
+}
+function render(){
+ const q=questions[index]; if(!q){finish();return}
+ $("qNumber").textContent=`${t("question")} ${index+1} / ${questions.length}`;
+ $("topicTag").textContent=q.topic;
+ $("questionText").textContent=q.q[lang];
+ $("options").innerHTML="";
+ q.opts[lang].forEach((opt,i)=>{
+  const label=document.createElement("label");label.className="option";
+  const input=document.createElement("input");input.type="radio";input.name="answer";input.value=i;
+  input.checked=answers[q.id]===i;input.disabled=!!checked[q.id];
+  input.addEventListener("change",()=>answers[q.id]=i);
+  const span=document.createElement("span");span.textContent=opt;
+  label.append(input,span);$("options").append(label);
+ });
+ $("feedback").className="feedback hidden";$("feedback").textContent="";
+ $("checkBtn").classList.toggle("hidden",!!checked[q.id]);$("nextBtn").classList.toggle("hidden",!checked[q.id]);
+ $("nextBtn").textContent=index===questions.length-1?(lang==="rw"?"Reba amanota":"See score"):t("next");
+ $("progressBar").style.width=(index/questions.length*100)+"%";
+ if(checked[q.id]) showFeedback(q);
+}
+function showFeedback(q){
+ const fb=$("feedback"),ok=answers[q.id]===q.a;
+ fb.className="feedback "+(ok?"correct":"wrong");
+ fb.innerHTML="";
+ const title=document.createElement("strong");title.textContent=(ok?t("right"):t("wrong"))+" "+t("correct")+": "+q.opts[lang][q.a];
+ const exp=document.createElement("p");exp.textContent=q.exp[lang];exp.style.margin="6px 0 0";
+ fb.append(title,exp);
+}
+$("checkBtn").addEventListener("click",()=>{
+ const q=questions[index];
+ if(answers[q.id]===undefined){alert(t("choose"));return}
+ checked[q.id]=true;render();
+});
+$("nextBtn").addEventListener("click",()=>{index++;if(index>=questions.length)finish();else render()});
+function finish(){
+ score=questions.filter(q=>answers[q.id]===q.a).length;
+ $("quizArea").classList.add("hidden");$("resultArea").classList.remove("hidden");$("progressBar").style.width="100%";
+ $("resultTitle").textContent=t("result");$("scoreText").textContent=Math.round(score/questions.length*100)+"%";
+ $("scoreDetail").textContent=t("detail").replace("{n}",score).replace("{total}",questions.length);
+ $("resultMessage").textContent=score/questions.length>=.7?t("good"):t("try");
+ try{localStorage.setItem("isomoSmartLast",JSON.stringify({score,total:questions.length,percent:Math.round(score/questions.length*100),date:new Date().toISOString()}))}catch(e){}
+}
+$("retryBtn").addEventListener("click",start);
+$("changeBtn").addEventListener("click",()=>{ $("resultArea").classList.add("hidden");$("quizArea").classList.remove("hidden");$("subject").focus();start()});
+$("lang").addEventListener("change",e=>{lang=e.target.value;setStatic();if(!$("resultArea").classList.contains("hidden"))finish();else render()});
+$("subject").addEventListener("change",start);
+setStatic();start();
+</script>
+</body>
+</html>
